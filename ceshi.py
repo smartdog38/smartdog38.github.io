@@ -57,7 +57,7 @@ while True:
         print("输入的玩家不存在，请重新输入：")
         continue
     print(f"玩家{player}的牌为：{player_set[player-1]}")
-
+#哥ajp
 
 #用.join()来拼接字符串
 # set = ['i','love','you','three','thousand']

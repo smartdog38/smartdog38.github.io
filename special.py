@@ -25,4 +25,4 @@ obj = re.compile(r"r(?P<id>\d+)g")
 result = obj.finditer("adi9qwijf797wqfger541gerqreh7887qhbufw8g4g8")
 for num in result:
     print(num.group("id"))
-
+print()
