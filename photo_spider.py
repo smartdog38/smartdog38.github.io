@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 import time
 from tqdm import tqdm
 
+
+#os.path.join  可以将文件路径与下一级文件名连接起来
 path = "D:/PyCharm Community Edition 2023.3/小爬爬/code"
 folder_name = '潮点图片'
 folder_path = os.path.join(path, folder_name)
