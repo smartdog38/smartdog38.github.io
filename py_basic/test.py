@@ -2,7 +2,7 @@ import openpyxl
 from socket import AF_INET,socket,SOCK_STREAM
 import time
 
-# data = openpyxl.load_workbook(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表 (2).xlsx")
+# data = openpyxl.load_workbook(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
 # work_sheet = data.active # 目前工作目录
 # work_sheet.cell(1,1).value = time.strftime("%Y-%m-%d",time.localtime())
 # data.save(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表 (2).xlsx")
@@ -45,9 +45,9 @@ import time
 # server_listen_socket.bind(('',8888))
 # server_listen_socket.listen(1)
 
-dcit = {'daf':'dwfq','affa':'fef'}
-for i in dcit:
-    print(i)
+# dcit = {'daf':'dwfq','affa':'fef'}
+# for i in dcit:
+#     print(i)
 # while True:
 #     session_socket, addr = server_listen_socket.accept()
 #     isON = True
@@ -67,3 +67,4 @@ for i in dcit:
 # option = "查询信息\n打印本月财务报表"
 # option_list =option.split("\n")
 # print(type(option_list.index('查询信息')))
+

@@ -50,7 +50,6 @@ class client_box(wx.Frame):
         self.recv_thread = threading.Thread(target=self.recv_message_thread)
         self.recv_thread.daemon = True
         self.recv_thread.start()
-
     #定义事件-------------------------------------------------------------------------------------------------------------
     #点击登录事件（done）
     def log_in(self,event):
@@ -81,6 +80,7 @@ class client_box(wx.Frame):
                     self.send_message("login")
                     user_name = self.user_text.GetValue()
                     passwd = self.passwd_text.GetValue()
+                    self.answer_text.Clear()
                     self.send_message(user_name)
                     self.send_message(passwd)
                 else:
@@ -105,7 +105,7 @@ class client_box(wx.Frame):
         if self.server_cond:
             if not self.logged_in:
                 self.sign_cond = True
-                self.check_sign()
+                self.send_message("sign")
     #定义一些就函数，简便程序------------------------------------------------------------------------------------------------
     #发消息
     def send_message(self,data):
@@ -115,28 +115,26 @@ class client_box(wx.Frame):
         while True:
             data = self.client_socket.recv(1024).decode('utf-8')
             self.answer_text.Clear()
-            if data == 'exit':
-                self.answer_text.AppendText("已退出登录")
+            if data == 'exit-c':
+                self.answer_text.AppendText("已退出登录！")
                 self.logged_in = False
+            elif data == 'exit-s':
+                self.send_message('exit-c')
             elif data == 'shutdown':
-                self.answer_text.AppendText("服务已关闭")
+                self.answer_text.AppendText("服务已关闭！")
+                self.server_cond = False
                 self.client_socket.close()
                 break
+            elif data == 'logged':
+                self.logged_in = True
+            elif data == 'signned':
+                self.answer_text.AppendText("用户已创建！")
+                self.sign_cond = False
             else:
                 self.answer_text.AppendText(data)
-    #判断注册流程是否结束
-    def check_sign(self):
-        self.answer_text.Clear()
-        self.send_message("sign")
-        check_thread = threading.Thread(target=self.sign_done)
-        check_thread.start()
-    #判断是否结束创建
-    def sign_done(self):
-        while True:
-            data = self.answer_text.GetValue()
-            if data == '用户已创建！':
-                break
-        self.sign_cond = False
+
+
+
 #--------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     app = wx.App()
