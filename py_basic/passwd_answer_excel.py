@@ -15,7 +15,7 @@ class server_answer(wx.Frame):
         self.work_sheet = work_sheet
         self.socket_connecting = {}
         self.work_book = work_book
- #绘制服务器窗口（finish）------------------------------------------------------------------------------------------------------------------
+ #绘制服务器窗口（finish）--------------------------------------------------------------------------------------------------
         wx.Frame.__init__(self,None,id=1222,pos=wx.DefaultPosition,title='英雄库',size=(550,550))
         pl = wx.Panel(self)
         box = wx.BoxSizer(wx.VERTICAL)
@@ -28,7 +28,7 @@ class server_answer(wx.Frame):
         box.Add(ff,1,wx.ALIGN_CENTRE|wx.ALL,10)
         box.Add(self.read_text,1,wx.ALIGN_CENTRE|wx.ALL,10)
         pl.SetSizer(box)
- #绑定事件(finish)-------------------------------------------------------------------------------------------------------------------------
+ #绑定事件(finish)--------------------------------------------------------------------------------------------------------
         self.Bind(wx.EVT_BUTTON,self.start_server,server_btn)
         self.Bind(wx.EVT_BUTTON,self.stop_server,stop_server_btn)
  #定义事件()--------------------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ class server_answer(wx.Frame):
             main_thread = Thread(target=self.start_work)
             main_thread.daemon = True
             main_thread.start()
- #主进程事件()
+ #主进程事件(done)
     def start_work(self):
         self.listen_socket = socket(AF_INET, SOCK_STREAM)
         self.listen_socket.bind(self.host_port)
@@ -59,28 +59,17 @@ class server_answer(wx.Frame):
             except OSError:
                 break
 
-    #停止服务事件
+    #停止服务事件（done）
     def stop_server(self,event):
-        for session_socket in self.socket_connecting:
-            session_socket.send("shutdown".encode('utf-8'))
-            data = session_socket.recv(1024).decode('utf-8')
-            if not data:
-                session_socket.close()
-            del self.socket_connecting[session_socket]
-        if not self.socket_connecting:
+        if self.isON == True:
+            for session_socket in self.socket_connecting.keys():
+                session_socket.send("shutdown".encode('utf-8'))
+            self.read_text.AppendText("正在关闭服务...")
+            while self.socket_connecting:
+                pass
             self.isON = False
             self.listen_socket.close()
-
-    def root_stop(self):
-        for session_socket in self.socket_connecting:
-            session_socket.send("shutdown".encode('utf-8'))
-            data = session_socket.recv(1024).decode('utf-8')
-            if not data:
-                session_socket.close()
-            del self.socket_connecting[session_socket]
-        if not self.socket_connecting:
-            self.isON = False
-            self.listen_socket.close()
+            self.read_text.AppendText("服务已关闭")
 
 
 class session_thread(Thread):
@@ -99,9 +88,7 @@ class session_thread(Thread):
             if method == 'login':
                 user_qx,user_name= self.user_login_varify()
                 if user_name != None:
-                    self.change_condition(user_name)
                     server.socket_connecting[self.session_socket] = user_name
-                    self.logged = True
                     #root用户
                     if user_qx == 'admin':
                         self.root_ctrl(user_name)
@@ -113,15 +100,15 @@ class session_thread(Thread):
                         self.sudo_ctrl(user_name)
             elif method == 'sign':
                 self.sign_user()
-            else:
+            elif method !='':
                 self.send_message("请先登录系统！")
-    #不同用户操作----------------------------------------------------------------------------------------------------------
+    #不同用户操作（）------------------------------------------------------------------------------------------------------
     #root操作
     def root_ctrl(self,name):
         option = "查询信息\n更改权限\n强制下线\n关闭系统"#最外层循环，不用return来break
         option_list = option.split('\n')
+        self.send_message(option)
         while self.logged:
-            self.send_message(option)
             order = self.recv_message()
             if not self.is_exit(order):
                 if order == option_list[0]:
@@ -139,14 +126,14 @@ class session_thread(Thread):
                 if order == option_list[3]:
                     server.read_text.AppendText(
                                     f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 执行了 {order} 指令")
-                    self.ro3()
+                    self.ro3(name)
 
             else:
                 break
-        server.read_text.AppendText(f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 退出了系统")
-
+        self.change_condition(name)
+    #查询信息模块（done）
     def ro0(self,name):
-        option = "用户信息\n在线用户"
+        option = "用户信息\n在线用户\n\n按 return 返回上一级"
         self.send_message(option)
         option_list = option.split("\n")
         user_dict = {}
@@ -154,9 +141,9 @@ class session_thread(Thread):
         for i in range(2,max_row):
             user_dict[self.work_sheet.cell(i, 1).value] = {}
             for j in range(2,11):
-                user_dict[self.work_sheet.cell(i,1).value][self.work_sheet.cell(1,j)] = self.work_sheet.cell(i,j).value
+                user_dict[self.work_sheet.cell(i,1).value][self.work_sheet.cell(1,j).value] = self.work_sheet.cell(i,j).value
+        self.send_message(option)
         while True:
-            self.send_message(option)
             order = self.recv_message()
             if not self.is_exit(order):
                 if order == option_list[0]:
@@ -168,25 +155,28 @@ class session_thread(Thread):
                 if order == option_list[1]:
                     server.read_text.AppendText(
                         f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 执行了 {order} 指令")
-                    self.ro0_1(user_dict, name)
+                    self.ro0_1(user_dict)
                     if not self.logged:
                         break
+                if order == 'return':
+                    break
             else:
                 break
+    #查询用户信息（done）
     def ro0_0(self,user_dict,name):
         data = ''
-        for user in user_dict.values():
-            data += f"{data}\n"
+        for user in user_dict.keys():
+            data += f"{user}\n"
         while True:
             self.send_message(data + "\n按 return 返回上一级")
             order = self.recv_message()
             if not self.is_exit(order):
-                if order in user_dict.values():
+                if order in user_dict.keys():
                     server.read_text.AppendText(
                         f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 执行了 {order} 指令")
                     user_intro = ''
-                    for intro in user_dict[order].values():
-                        user_intro += f"{user_dict[order][intro]}\n"
+                    for intro in user_dict[order].keys():
+                        user_intro += f"{intro}   :   {user_dict[order][intro]}\n"
                     self.send_message(user_intro+"\n按 return 返回上一级")
                     order = self.recv_message()
                     if not self.is_exit(order):
@@ -197,19 +187,19 @@ class session_thread(Thread):
                     break
             else:
                 break
+    #查询在线用户(done)
     def ro0_1(self,user_dict):
         data = ''
-        for user in user_dict.values():
+        for user in user_dict.keys():
             if user_dict[user]['用户状态'] == 'on':
                 data += f"{user}\n"
-            self.send_message(data+"\n按 return 返回上一级")
-            order = self.recv_message()
-            if not self.is_exit(order):
-                pass
-            else:
-                pass
-
-
+        self.send_message(data+"\n按 return 返回上一级")
+        order = self.recv_message()
+        if not self.is_exit(order):
+            pass
+        else:
+            pass
+    #更改权限模块（done）
     def ro1(self,name):
         max_row = self.work_sheet.max_row + 1
         data = ''
@@ -217,7 +207,7 @@ class session_thread(Thread):
         for i in range(2, max_row):
             data += f"{self.work_sheet.cell(i, 1).value}   :   {self.work_sheet.cell(i, 3).value}\n"
             user_row_dict[self.work_sheet.cell(i, 1).value] = i
-        data += "\n\n用户名 change 更改权限\n\n按 return 返回上一级"
+        data += "\n\n输入 （用户名） 为其更改权限\n（sudo->common,common->sudo）\n\n按 return 返回上一级"
         while True:
             self.send_message(data)
             order = self.recv_message()
@@ -247,8 +237,7 @@ class session_thread(Thread):
                     break
             else:
                 break
-
-
+    #下线用户模块（done）
     def ro2(self,name):
         while True:
             on_user_list = []
@@ -265,10 +254,10 @@ class session_thread(Thread):
                 if order in on_user_list:
                     server.read_text.AppendText(
                         f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 执行了 {order} 指令")
-                    for session in server.socket_connecting.values():
+                    for session in server.socket_connecting.keys():
                         if server.socket_connecting[session] == order:
                             session.send("exit-s".encode('utf-8'))
-                            self.send_message("已关闭该用户！")
+                            self.send_message("已关闭该用户！\n\n按 return 返回上一级")
                             order = self.recv_message()
                             if not self.is_exit(order):
                                 pass
@@ -278,14 +267,18 @@ class session_thread(Thread):
                     break
             else:
                 break
-
-
-
+    #关闭系统模块
     def ro3(self,name):
-
-
-
-
+        for session in server.socket_connecting.keys():
+            if server.socket_connecting[session] != name:
+                session.send("shutdown".encode("utf-8"))
+        if len(server.socket_connecting) == 1:
+            server.read_text.AppendText("其余客户机已关闭！！！\n\n\n按 return 返回上一级")
+        order = self.recv_message()
+        if not self.is_exit(order):
+            pass
+        else:
+            pass
 
 
     #sudo用户操作
@@ -308,11 +301,10 @@ class session_thread(Thread):
                 elif order == option_list[1]:
                     server.read_text.AppendText(
                         f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 执行了 {order} 指令")
-                self.so1(user_row)
+                    self.so1(user_row)
             else:
                 break
-        server.read_text.AppendText(f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 退出了系统")
-
+        self.change_condition(name)
     def so0(self,row,name,rows):
         option = "查询本用户信息\n查询common用户密码"
         option_list = option.split("\n")
@@ -336,7 +328,6 @@ class session_thread(Thread):
                     break
             else:
                 break
-
     def so0_1(self,row,name):
         option_dict = {}
         data1 = ''
@@ -418,7 +409,9 @@ class session_thread(Thread):
                     server.read_text.AppendText(
                         f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 执行了 {order} 指令")
                     self.co1(user_row)
-        server.read_text.AppendText(f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{name} 退出了系统")
+                elif not order:
+                    break
+        self.change_condition(name)
     def co0(self,row,name):
         option_dict = {}
         data = ''
@@ -465,6 +458,8 @@ class session_thread(Thread):
             if passwd == user_passwd_dict[user_name]:
                 self.send_message("logged")
                 server.read_text.AppendText(f"{time.strftime('%Y-%m-%d %H-%M-%S',time.localtime() )}\n{user_name}  登录进系统")
+                self.change_condition(user_name)
+                self.logged = True
                 return user_qx_dict[user_name], user_name
             else:
                 self.send_message("密码错误！")
@@ -472,12 +467,32 @@ class session_thread(Thread):
         else:
             self.send_message("用户不存在！")
             return None, None
+    def change_condition(self,user):
+        rows = self.work_sheet.max_row + 1
+        for i in range(2,rows):
+            if self.work_sheet.cell(i,1).value == user:
+                if self.work_sheet.cell(i,8).value == 'down':
+                    self.work_sheet.cell(i,8).value = 'on'
+                else:
+                    self.work_sheet.cell(i, 8).value = 'down'
+        self.work_book.save(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
+
     #定义接受信息的函数
     def recv_message(self):
-        return self.session_socket.recv(1024).decode('utf-8')
+        if self.isON:
+            data = self.session_socket.recv(1024).decode('utf-8')
+            if not data:
+                self.isON = False
+                del server.socket_connecting[self.session_socket]
+                self.session_socket.close()
+            return data
+
+
+
     #定义发信息的函数
     def send_message(self,data):
-        self.session_socket.send(data.encode('utf-8'))
+        if self.isON:
+            self.session_socket.send(data.encode('utf-8'))
     #定义注册用户(done)
     def sign_user(self):
         rows = self.work_sheet.max_row + 1
@@ -521,19 +536,6 @@ class session_thread(Thread):
         self.send_message("用户已创建！")
         server.read_text.AppendText(f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{user_name} 已被创建 " )
         self.send_message("signned")
-
-    def change_condition(self,user):
-        rows = self.work_sheet.max_row + 1
-        for i in range(2,rows):
-            if self.work_sheet.cell(i,1) == user:
-                if self.work_sheet.cell(i,8).value == 'down':
-                    self.work_sheet.cell(i,8).value = 'down'
-                    self.work_book.save(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
-                    server.read_text.AppendText(f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{user} 退出系统")
-                else:
-                    self.work_sheet.cell(i, 8).value = 'on'
-                    self.work_book.save(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
-                    server.read_text.AppendText(f"{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{user} 登录系统")
     def is_exit(self,order):
         if order == "exit-c":
             self.logged = False

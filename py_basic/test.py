@@ -2,8 +2,29 @@ import openpyxl
 from socket import AF_INET,socket,SOCK_STREAM
 import time
 
-# data = openpyxl.load_workbook(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
-# work_sheet = data.active # 目前工作目录
+data = openpyxl.load_workbook(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
+work_sheet = data.active # 目前工作目录
+work_sheet.cell(2, 8).value = 'on'
+data.save(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
+
+
+
+user_dict = {}
+max_row = work_sheet.max_row + 1
+for i in range(2, max_row):
+    user_dict[work_sheet.cell(i, 1).value] = {}
+    for j in range(2, 11):
+        user_dict[work_sheet.cell(i, 1).value][work_sheet.cell(1, j).value] = work_sheet.cell(i, j).value
+
+
+
+
+# for user in user_dict.keys():
+#     print(user_dict[user]['用户状态'])
+    # for intro in user_dict[user].keys():
+    #     # print(user_dict[user][intro])
+    # break
+# print(user_dict.keys())
 # work_sheet.cell(1,1).value = time.strftime("%Y-%m-%d",time.localtime())
 # data.save(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表 (2).xlsx")
 # print(work_sheet.cell(1,1).value)
