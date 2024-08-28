@@ -4,6 +4,11 @@ import time
 from threading import Thread
 import openpyxl
 
+'''
+还剩下服务器关闭服务，剩下客户端结束通信没有完成
+kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+'''
+
 #加载xlsx文件-------------------------------------------------------------------------------------------------------------
 work_book = openpyxl.load_workbook(r"C:\Users\smart dogs\Desktop\新建 XLSX 工作表.xlsx")
 work_sheet = work_book.active
@@ -550,3 +555,5 @@ if __name__ == '__main__':
     server = server_answer(work_sheet,work_book)
     server.Show()
     app.MainLoop()
+
+
