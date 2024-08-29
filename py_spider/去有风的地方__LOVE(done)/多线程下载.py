@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 import os
 import subprocess
+import concurrent.futures
+import shutil
 
 def save_url_dict(url, num, html_dict):
     html_dict[f"第{num}集"] = url
@@ -63,14 +65,33 @@ def create_txt(folder_name, name,num):
             f.write("file "+"'"+ts_path+"'"+"\n")
 
 
-def down_ts_video(folder_name, name, ts_url, episode_num):
-    ts_name = os.path.join(folder_name, name, f"{episode_num}.ts")  # Use episode number directly
-    try:
-        data = ht.get(ts_url, timeout=10).content
-        with open(ts_name, "wb") as f:
-            f.write(data)
-    except Exception as e:
-        print(f"Error downloading {ts_url}: {e}")
+def down_ts_video(folder_name, name, ts_url, episode_num, tries=5):
+    ts_name = os.path.join(folder_name, name, f"{episode_num}.ts")
+    for attempt in range(tries):
+        try:
+            response = ht.get(ts_url, timeout=10)
+            response.raise_for_status()
+            with open(ts_name, "wb") as f:
+                f.write(response.content)
+            break
+        except requests.exceptions.HTTPError as http_err:
+            print(f"HTTP错误: {http_err} - 尝试次数: {attempt + 1}")
+        except requests.exceptions.RequestException as req_err:
+            print(f"请求错误: {req_err} - 尝试次数: {attempt + 1}")
+        except Exception as e:
+            print(f"发生错误: {e} - 尝试次数: {attempt + 1}")
+    else:
+        print(f"下载失败: {ts_url} 在 {tries} 次尝试后.")
+# def down_ts_video(folder_name, name, ts_url, episode_num,tries = 5):
+#     ts_name = os.path.join(folder_name, name, f"{episode_num}.ts")  # Use episode number directly
+#     for i in range(0,tries):
+#         try:
+#             data = ht.get(ts_url, timeout=10).content
+#             with open(ts_name, "wb") as f:
+#                 f.write(data)
+#             break
+#         except Exception as e:
+#             print(f"Error downloading {ts_url}: {e}")
 
 def merge(txt_path,folder_path,name):
     try:
@@ -83,7 +104,7 @@ def merge(txt_path,folder_path,name):
             "-c", "copy",
             output_file_path
         ], check=True)
-        os.rmdir(os.path.join(folder_path,name))
+        shutil.rmtree(os.path.join(folder_path,name))
     except subprocess.CalledProcessError as e:
         print(f"合并文件时出错: {e}")
 
