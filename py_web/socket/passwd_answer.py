@@ -119,10 +119,6 @@ class session_Thread(Thread):
                 self.isON = False
                 self.server.read_text.AppendText(f'\n{time.strftime("%Y-%m-%d %H:%M-%S", time.localtime())}\n{self.username}退出登录\n')
 #用户操作语句--------------------------------------------------------------------------------------------------------------
-
-
-
-
 #查询语句-----------------------------------------------------------------------------------------------------------------
     def check(self, username):
         if isinstance(command_dict[username],dict):
